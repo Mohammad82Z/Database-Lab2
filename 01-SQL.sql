@@ -1,94 +1,86 @@
-CREATE TABLE Users (
-    user_id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(50) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE "Users"(
+    "created_at" INT NULL DEFAULT 'GETDATE()',
+    "email" VARCHAR(100) NOT NULL,
+    "username" VARCHAR(50) NOT NULL,
+    "user_id" INT NOT NULL,
+    "password" VARCHAR(255) NOT NULL
 );
-
-CREATE TABLE Products (
-    product_id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    description TEXT NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
-    image_url VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+ALTER TABLE
+    "Users" ADD CONSTRAINT "users_user_id_primary" PRIMARY KEY("user_id");
+CREATE TABLE "ProductCategories"(
+    "category_id" INT NOT NULL,
+    "product_id" INT NOT NULL
 );
-
-CREATE TABLE Categories (
-    category_id INT PRIMARY KEY AUTO_INCREMENT,
-    category_name VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+ALTER TABLE
+    "ProductCategories" ADD CONSTRAINT "productcategories_category_id_primary" PRIMARY KEY("category_id");
+ALTER TABLE
+    "ProductCategories" ADD CONSTRAINT "productcategories_product_id_primary" PRIMARY KEY("product_id");
+CREATE TABLE "Reviews"(
+    "created_at" INT NULL DEFAULT 'GETDATE()',
+    "product_id" INT NULL,
+    "user_id" INT NULL,
+    "comment" VARCHAR(255) NULL,
+    "review_id" INT NOT NULL,
+    "rating" INT NULL
 );
-
-CREATE TABLE ProductCategories (
-    product_id INT,
-    category_id INT,
-    PRIMARY KEY (product_id, category_id),
-    FOREIGN KEY (product_id) REFERENCES Products(product_id),
-    FOREIGN KEY (category_id) REFERENCES Categories(category_id)
+ALTER TABLE
+    "Reviews" ADD CONSTRAINT "reviews_review_id_primary" PRIMARY KEY("review_id");
+CREATE TABLE "Products"(
+    "description" VARCHAR(255) NOT NULL,
+    "product_id" INT NOT NULL,
+    "name" VARCHAR(100) NOT NULL,
+    "created_at" INT NULL DEFAULT 'GETDATE()',
+    "image_url" VARCHAR(255) NULL,
+    "price" DECIMAL(10, 2) NOT NULL
 );
-
-CREATE TABLE Addresses (
-    address_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    address_line VARCHAR(255) NOT NULL,
-    city VARCHAR(100) NOT NULL,
-    postal_code VARCHAR(20) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+ALTER TABLE
+    "Products" ADD CONSTRAINT "products_product_id_primary" PRIMARY KEY("product_id");
+CREATE TABLE "Orders"(
+    "total_amount" DECIMAL(10, 2) NOT NULL,
+    "user_id" INT NULL,
+    "order_id" INT NOT NULL,
+    "order_date" INT NULL DEFAULT 'GETDATE()'
 );
-
-CREATE TABLE Orders (
-    order_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    total_amount DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+ALTER TABLE
+    "Orders" ADD CONSTRAINT "orders_order_id_primary" PRIMARY KEY("order_id");
+CREATE TABLE "Categories"(
+    "created_at" INT NULL DEFAULT 'GETDATE()',
+    "category_name" VARCHAR(50) NOT NULL,
+    "category_id" INT NOT NULL
 );
-
-CREATE TABLE OrderDetails (
-    order_detail_id INT PRIMARY KEY AUTO_INCREMENT,
-    order_id INT,
-    product_id INT,
-    quantity INT NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES Orders(order_id),
-    FOREIGN KEY (product_id) REFERENCES Products(product_id)
+ALTER TABLE
+    "Categories" ADD CONSTRAINT "categories_category_id_primary" PRIMARY KEY("category_id");
+CREATE TABLE "Addresses"(
+    "address_id" INT NOT NULL,
+    "postal_code" VARCHAR(20) NOT NULL,
+    "user_id" INT NULL,
+    "address_line" VARCHAR(255) NOT NULL,
+    "city" VARCHAR(100) NOT NULL
 );
-
-CREATE TABLE Reviews (
-    review_id INT PRIMARY KEY AUTO_INCREMENT,
-    product_id INT,
-    user_id INT,
-    rating INT CHECK (rating >= 1 AND rating <= 5),
-    comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES Products(product_id),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+ALTER TABLE
+    "Addresses" ADD CONSTRAINT "addresses_address_id_primary" PRIMARY KEY("address_id");
+CREATE TABLE "OrderDetails"(
+    "order_id" INT NULL,
+    "product_id" INT NULL,
+    "quantity" INT NOT NULL,
+    "price" DECIMAL(10, 2) NOT NULL,
+    "order_detail_id" INT NOT NULL
 );
-
-DELIMITER //
-CREATE PROCEDURE CreateOrder(IN userId INT, IN total DECIMAL(10,2))
-BEGIN
-    INSERT INTO Orders (user_id, total_amount) VALUES (userId, total);
-END //
-DELIMITER ;
-
-DELIMITER //
-CREATE TRIGGER UpdateProductStock
-AFTER INSERT ON OrderDetails
-FOR EACH ROW
-BEGIN
-    UPDATE Products SET stock = stock - NEW.quantity WHERE product_id = NEW.product_id;
-END //
-DELIMITER ;
-
-SELECT
-    p.name AS product_name,
-    p.description AS product_description,
-    p.price AS product_price,
-    r.rating AS review_rating,
-    r.comment AS review_comment
-FROM
-    Products p
-LEFT JOIN Reviews r ON p.product_id = r.product_id;
+ALTER TABLE
+    "OrderDetails" ADD CONSTRAINT "orderdetails_order_detail_id_primary" PRIMARY KEY("order_detail_id");
+ALTER TABLE
+    "Reviews" ADD CONSTRAINT "reviews_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "Users"("user_id");
+ALTER TABLE
+    "Categories" ADD CONSTRAINT "categories_category_id_foreign" FOREIGN KEY("category_id") REFERENCES "ProductCategories"("category_id");
+ALTER TABLE
+    "OrderDetails" ADD CONSTRAINT "orderdetails_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "Products"("product_id");
+ALTER TABLE
+    "Reviews" ADD CONSTRAINT "reviews_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "Products"("product_id");
+ALTER TABLE
+    "Orders" ADD CONSTRAINT "orders_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "Users"("user_id");
+ALTER TABLE
+    "OrderDetails" ADD CONSTRAINT "orderdetails_order_id_foreign" FOREIGN KEY("order_id") REFERENCES "Orders"("order_id");
+ALTER TABLE
+    "Products" ADD CONSTRAINT "products_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "ProductCategories"("product_id");
+ALTER TABLE
+    "Addresses" ADD CONSTRAINT "addresses_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "Users"("user_id");
